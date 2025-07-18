@@ -4,10 +4,6 @@
 # It reads the significant loci files and finds the overlapping loci between the two files
 
 import pandas as pd
-import numpy as np
-import plotly.express as px
-from matplotlib import cm
-from matplotlib.colors import to_hex
 from matplotlib import pyplot as plt
 from matplotlib_venn import venn2
 import argparse
@@ -16,13 +12,16 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--male", type=str, required=True, help="Path to the male significant loci file")
     parser.add_argument("-f", "--female", type=str, required=True, help="Path to the female significant loci file")
+    parser.add_argument("-c", "--combined", type=str, required=True, help="Path to the female significant loci file")
     args = parser.parse_args()
 
     # Read the significant loci files
     male_loci = read_sig_loci(args.male)
     female_loci = read_sig_loci(args.female)
+    combined_loci = read_sig_loci(args.combined)
     print(f"{male_loci.shape=}")
     print(f"{female_loci.shape=}")
+    print(f"{combined_loci.shape=}")
 
     overlap_df = loci_overlap2(male_loci, female_loci, 'male', 'female')
     print(f"{overlap_df.shape=}")
@@ -31,18 +30,13 @@ def main() -> None:
     shared_groups = group_counts[group_counts == 2].index
     shared_df = overlap_df[overlap_df['SET'] == 'male,female']
     print(f"{shared_df.shape=}")
-    # print(f'{shared_df.info()=}')
-    # print(f'{shared_df.head()=}')
-    # overlap_df = find_overlapping_loci(male_loci, female_loci, get_df_id(male_loci, female_loci))
-    # print(f"{overlap_df.shape=}")
-    # print(f"{overlap_df[overlap_df['group'] == 'both'].shape=}")
     overlap_df.to_csv("overlap_df.csv", index=False)
     venn_for_2(overlap_df)
 
-    overlap_df3 = loci_overlap3(male_loci, female_loci, male_loci, 'male', 'female', 'none')
+    overlap_df3 = loci_overlap3(male_loci, female_loci, male_loci, 'male', 'female', 'combined')
     print(f"{overlap_df3.shape=}")
     overlap_df3.to_csv("overlap_df3.csv", index=False)
-    venn_for_3(overlap_df3)
+    #venn_for_3(overlap_df3)
 
 def read_sig_loci(file_path: str) -> pd.DataFrame:
     '''
@@ -53,7 +47,7 @@ def read_sig_loci(file_path: str) -> pd.DataFrame:
     - 3: end position
     '''
     df = pd.read_csv(file_path, sep="\t", usecols=[0,1,2,3], header=None).rename(columns={0: 'pheno', 1: 'chr', 2: 'start', 3: 'end'})
-    df = df[~df['pheno'].isin(['AGE_NMBR_COM', 'ADM_DCS_AGE_COM'])].reset_index(drop=True)
+    df = df[~df['pheno'].isin(['AGE_NMBR_COM', 'ADM_DCS_AGE_COM', 'WHO_MPAG_AG_COM'])].reset_index(drop=True)
     df['ANALYSIS'] = 'PRIMARY'
     df = df.rename(columns={
         'pheno': 'PHENOTYPE',
@@ -300,7 +294,8 @@ def loci_overlap3(df1_hits: pd.DataFrame, df2_hits: pd.DataFrame, df3_hits: pd.D
 
 def venn_for_2(df: pd.DataFrame) -> None:
     '''
-    Plot the venn diagram of the significant loci
+    Plot the venn diagram of the significant loci,
+    save male-only and female-only loci, and count by phenotype
     '''
     only_male = set(df[df['SET'] == 'male']['SET_LOCI_GROUP_ID'])
     only_female = set(df[df['SET'] == 'female']['SET_LOCI_GROUP_ID'])
@@ -310,6 +305,23 @@ def venn_for_2(df: pd.DataFrame) -> None:
     male_only = only_male - shared
     female_only = only_female - shared
 
+    # Filter full rows from df
+    df_male_only = df[df['SET_LOCI_GROUP_ID'].isin(male_only)]
+    df_female_only = df[df['SET_LOCI_GROUP_ID'].isin(female_only)]
+
+    # Save to CSV
+    df_male_only.to_csv('male_only_rows.csv', index=False)
+    df_female_only.to_csv('female_only_rows.csv', index=False)
+
+    # Count by PHENOTYPE
+    count_by_phenotype = pd.concat([
+        df_male_only.assign(SPECIFICITY='Male'),
+        df_female_only.assign(SPECIFICITY='Female')
+    ]).groupby(['PHENOTYPE', 'SPECIFICITY']).size().reset_index(name='COUNT')
+
+    # Save counts to CSV (optional)
+    count_by_phenotype.to_csv('sex_specific_loci_counts_by_phenotype.csv', index=False)
+
     venn2(subsets=(len(male_only), len(female_only), len(shared)),
       set_labels=('Male', 'Female'))
 
@@ -317,23 +329,23 @@ def venn_for_2(df: pd.DataFrame) -> None:
     plt.savefig("sex_specific_loci_venn.png", dpi=300)
     plt.show()
 
-def venn_for_3(df: pd.DataFrame) -> None:
-    '''
-    Plot the venn diagram of the significant loci
-    '''
-    only_male = set(df[df['SET'].isin(['male,none', 'none,male'])]['SET_LOCI_GROUP_ID'])
-    only_female = set(df[df['SET'] == 'female']['SET_LOCI_GROUP_ID'])
-    both = set(df[df['SET'] == 'male,female,none']['SET_LOCI_GROUP_ID'])
+# def venn_for_3(df: pd.DataFrame) -> None:
+#     '''
+#     Plot the venn diagram of the significant loci
+#     '''
+#     only_male = set(df[df['SET'].isin(['male,none', 'none,male'])]['SET_LOCI_GROUP_ID'])
+#     only_female = set(df[df['SET'] == 'female']['SET_LOCI_GROUP_ID'])
+#     both = set(df[df['SET'] == 'male,female,none']['SET_LOCI_GROUP_ID'])
 
-    shared = both
-    male_only = only_male - shared
-    female_only = only_female - shared
-    venn2(subsets=(len(male_only), len(female_only), len(shared)),
-      set_labels=('Male', 'Female', 'Both'))
+#     shared = both
+#     male_only = only_male - shared
+#     female_only = only_female - shared
+#     venn2(subsets=(len(male_only), len(female_only), len(shared)),
+#       set_labels=('Male', 'Female', 'Combined'))
 
-    plt.title("Fig2: Venn Diagram of Shared and Sex-specific Loci with three inputs")
-    plt.savefig("sex_specific_loci_venn2.png", dpi=300)
-    plt.show()
+#     plt.title("Fig2: Venn Diagram of Shared and Sex-specific Loci with three inputs")
+#     plt.savefig("sex_specific_loci_venn2.png", dpi=300)
+#     plt.show()
 
 if __name__ == "__main__":
     main()
