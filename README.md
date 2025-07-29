@@ -1,4 +1,4 @@
-# PheWeb2.0-manuscript
+# PheWeb2-manuscript
 
 ## compare_significant_loci
 
