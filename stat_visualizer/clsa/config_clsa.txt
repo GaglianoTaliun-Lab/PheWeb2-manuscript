@@ -1,0 +1,84 @@
+# This is a template file of a TOML config file that will be used for the python script
+
+DICT_FILE = "/home/justb11/projects/def-gsarah/justb11/stat_visualizer/clsa/23ME002_UdeM_SGTaliun_Baseline_CoPv7_Qx_PA_BS-dictionary.xlsx" # path to dictionnary file (usually an .xlsx file)
+CODING_FILE = "" # can be the same as the dictionnary file
+PHENOTYPE_FILE = "/home/justb11/projects/def-gsarah/justb11/stat_visualizer/clsa/23ME002_UdeM_SGTaliun_Baseline_CoPv7_Qx_PA_BS.csv" # path to the file with the phenotypes (usually a .csv file)
+
+# Sheet names
+SHEET_NAME_MAIN = "Variables" # name of the sheet which contains metadata about the traits.
+SHEET_NAME_CODES = "Categories" # name of the sheet that contains the coded missing variables.
+
+# Information needed about columns in the PHENOTYPE_FILE
+[PHENOTYPE_COLS]
+IID = "entity_id" # ID column for samples, usually considered IIDs
+SEX_VAR = "SEX_ASK_COM" # column which represents the biological sex variable
+
+# How the males and females are coded in the phenotype file
+# Possibilities are usually "0" or "1", "M" or "F", "male" or "female", etc..
+FEMALE = "F" 
+MALE = "M"
+
+# column names for SHEET_NAME_MAIN
+[COLUMN_NAMES_MAIN]
+VARNAME = "name"
+UNITTYPE = "valueType"
+LABEL = "label"
+DATABASE = "" #optional
+
+# column names for SHEET_NAME_CODES
+[COLUMN_NAMES_CODES]
+VARIABLE = "variable"
+CODE = "name"
+CATEGORY = "label"
+DOMAIN = "" # optional
+
+# Here you will declare phrases or sentences so that the script 
+# will properly identify missing codes (also known as variables)
+
+[MISSING]
+# A list of substrings that, when matched, will treat the code as a missing variable.
+# Capital letter sensitive
+MISSING_CATEGORIES_SUB = [
+    "At least one of the required questions was not answered",
+    "At least one missing item and",
+    "At least one missing item but",
+    "At least one mising item",
+    "Don't know/ No answer",
+    "Don't know/No answer",
+    "DO NOT READ",
+    "please specify",
+    "Refused to answer",
+    "pleases specify",
+    "Inconclusive due to missing items",
+    "Inconclusive classification due to missing values",
+    "Inconclusive due to at least one missing item",
+    "Inconclusive result of PTSD screening due to missing values",
+    "At least one required question was not answered",
+    "At least one of the required questions was not answered",
+    "Other circumstance of fall",
+    "Missing - Technical",
+    "Don't kNow/No answer",
+    "Excluded Participants – Not currently a daily",
+    "Don't Know/No Answer",
+    "Image not rated yet",
+    "Participants not sampled for particular measure",
+    "exact value undetermined",
+    "At least one missing item",
+    "CES-D 10 score could not be calculated due",
+    "Excluded participants",
+    "Required question was not answered",
+    "Population exclusion -"
+]
+
+# A list of strings that will only consider a code a missing variable if it an exact match
+# Capital letter sensitive
+MISSING_CATEGORIES_EXACT = [
+    "Not applicable",
+    "Rarely/ Never",
+    "Refused",
+    "Missing",
+    "Not Applicable",
+    "NotApplicable",
+    "Don’t know/ No answer",
+    "OTHER"
+]
