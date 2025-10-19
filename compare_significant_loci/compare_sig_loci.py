@@ -314,11 +314,12 @@ def venn_for_2(df: pd.DataFrame) -> None:
     # Save counts to CSV (optional)
     count_by_phenotype.to_csv('sex_specific_loci_counts_by_phenotype.csv', index=False)
 
+    # change labels (for ancestry, for ex) if you want!
     venn2(subsets=(len(male_only), len(female_only), len(shared)),
-      set_labels=('European', 'All'))
+      set_labels=('Male', 'Female')) 
 
     plt.title("Fig1: Venn Diagram of Shared and European-specific Loci")
-    plt.savefig("ancestry_specific_loci_venn.png", dpi=300)
+    plt.savefig("sex_specific_loci_venn.png", dpi=300) 
     plt.show()
 
 if __name__ == "__main__":
