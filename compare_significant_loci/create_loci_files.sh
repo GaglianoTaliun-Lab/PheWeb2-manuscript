@@ -9,7 +9,7 @@
 
 source .venv/bin/activate
 
-GWAS_DIR="/home/justb11/scratch/Thesis_work/copy_generated_by_pheweb/generated-by-pheweb/parsed"  
+GWAS_DIR="/lustre06/project/6060121/CLSA_PheWeb_shared/PheWeb_v2_final_data/generated-by-pheweb/parsed"  
 SCRIPT="get_significant_loci.py"          
 OUTPUT_DIR="loci"     
 MIN_AF=0.01                         
