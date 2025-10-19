@@ -8,7 +8,15 @@
 
 source .venv/bin/activate
 
+# python compare_sig_loci.py \
+#     -m total.all.male_loci_list.txt \
+#     -f total.all.female_loci_list.txt \
+#     -c total.all.combined_loci_list.txt
+
 python compare_sig_loci.py \
     -m total.all.male_loci_list.txt \
-    -f total.all.female_loci_list.txt \
-    -c total.all.combined_loci_list.txt
+    -f total.all.female_loci_list.txt
+
+python compare_sig_loci.py \
+    -m total.european.combined_loci_list.txt \
+    -f total.all.combined_loci_list.txt
