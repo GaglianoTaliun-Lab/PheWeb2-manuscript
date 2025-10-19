@@ -7,36 +7,26 @@ import pandas as pd
 from matplotlib import pyplot as plt
 from matplotlib_venn import venn2
 import argparse
+import os
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("-m", "--male", type=str, required=True, help="Path to the male significant loci file")
     parser.add_argument("-f", "--female", type=str, required=True, help="Path to the female significant loci file")
-    parser.add_argument("-c", "--combined", type=str, required=True, help="Path to the female significant loci file")
+    # parser.add_argument("-c", "--combined", type=str, required=True, help="Path to the female significant loci file")
     args = parser.parse_args()
 
     # Read the significant loci files
     male_loci = read_sig_loci(args.male)
     female_loci = read_sig_loci(args.female)
-    combined_loci = read_sig_loci(args.combined)
-    print(f"{male_loci.shape=}")
-    print(f"{female_loci.shape=}")
-    print(f"{combined_loci.shape=}")
 
     overlap_df = loci_overlap2(male_loci, female_loci, 'male', 'female')
-    print(f"{overlap_df.shape=}")
     
     group_counts = overlap_df['SET_LOCI_GROUP_ID'].value_counts()
-    shared_groups = group_counts[group_counts == 2].index
     shared_df = overlap_df[overlap_df['SET'] == 'male,female']
-    print(f"{shared_df.shape=}")
     overlap_df.to_csv("overlap_df.csv", index=False)
     venn_for_2(overlap_df)
 
-    overlap_df3 = loci_overlap3(male_loci, female_loci, male_loci, 'male', 'female', 'combined')
-    print(f"{overlap_df3.shape=}")
-    overlap_df3.to_csv("overlap_df3.csv", index=False)
-    #venn_for_3(overlap_df3)
 
 def read_sig_loci(file_path: str) -> pd.DataFrame:
     '''
@@ -47,6 +37,7 @@ def read_sig_loci(file_path: str) -> pd.DataFrame:
     - 3: end position
     '''
     df = pd.read_csv(file_path, sep="\t", usecols=[0,1,2,3], header=None).rename(columns={0: 'pheno', 1: 'chr', 2: 'start', 3: 'end'})
+    df['pheno'] = df['pheno'].apply(lambda x: os.path.basename(x).split('.')[0])
     df = df[~df['pheno'].isin(['AGE_NMBR_COM', 'ADM_DCS_AGE_COM', 'WHO_MPAG_AG_COM'])].reset_index(drop=True)
     df['ANALYSIS'] = 'PRIMARY'
     df = df.rename(columns={
@@ -60,7 +51,7 @@ def read_sig_loci(file_path: str) -> pd.DataFrame:
     df['CHROM'] = df['CHROM'].replace('X_par2', 25)
     df['CHROM'] = df['CHROM'].astype(int)
     df['ID'] = df.apply(lambda row: f"{row['PHENOTYPE']}${row['CHROM']}${row['LOCUS_START']}${row['LOCUS_STOP']}", axis=1)
-
+    
     return df
 
 
@@ -82,13 +73,13 @@ def find_overlapping_loci(male_loci: pd.DataFrame, female_loci: pd.DataFrame, id
     # overlap_df = pd.DataFrame(columns=['pheno', 'chr', 'start_male', 'end_male', 'start_female', 'end_female', 'group'])
     # overlap_df['group'] = []
     overlap_rows = [] 
-
+    
     for id in id_list:
         pheno = id.split('$')[0]
         chr = id.split('$')[1]
         start = int(id.split('$')[2])
         end = int(id.split('$')[3])
-        
+                
         male = male_loci[(male_loci['pheno'] == pheno) & (male_loci['chr'] == chr) & (male_loci['start'] <= end) & (male_loci['end'] >= start)].copy()
         female = female_loci[(female_loci['pheno'] == pheno) & (female_loci['chr'] == chr) & (female_loci['start'] <= end) & (female_loci['end'] >= start)].copy()
 
@@ -149,6 +140,7 @@ def loci_overlap2(df1_hits: pd.DataFrame, df2_hits: pd.DataFrame, label1: str, l
             loci_groups[key] = group_id
         
     def add_loci_to_overlap(df, set_name, loci_group_id, label):
+        
         for _, row in df.iterrows():
             key = get_locus_key(row)
             if key in remaining_loci:
@@ -168,7 +160,7 @@ def loci_overlap2(df1_hits: pd.DataFrame, df2_hits: pd.DataFrame, label1: str, l
         chrom = int(chrom)
         start = int(start)
         stop = int(stop)
-
+        
         df1_overlap = df1_hits[
             (df1_hits.ANALYSIS == 'PRIMARY') &
             (df1_hits.PHENOTYPE == phenotype) &
@@ -197,7 +189,7 @@ def loci_overlap2(df1_hits: pd.DataFrame, df2_hits: pd.DataFrame, label1: str, l
             loci_group_id = get_loci_group_id(df2_overlap)
             add_loci_group_id(loci_group_id, df2_overlap)
             add_loci_to_overlap(df2_overlap, f'{label2}', loci_group_id, label2)
-
+            
     return pd.DataFrame(df_overlap, columns=[
         'ID', 'CHROM', 'LOCUS_START', 'LOCUS_STOP', 'PHENOTYPE',
         'SET', 'SET_LOCI_GROUP_ID', 'SET_LOCUS_SOURCE'
@@ -304,7 +296,7 @@ def venn_for_2(df: pd.DataFrame) -> None:
     shared = both
     male_only = only_male - shared
     female_only = only_female - shared
-
+    
     # Filter full rows from df
     df_male_only = df[df['SET_LOCI_GROUP_ID'].isin(male_only)]
     df_female_only = df[df['SET_LOCI_GROUP_ID'].isin(female_only)]
@@ -323,29 +315,11 @@ def venn_for_2(df: pd.DataFrame) -> None:
     count_by_phenotype.to_csv('sex_specific_loci_counts_by_phenotype.csv', index=False)
 
     venn2(subsets=(len(male_only), len(female_only), len(shared)),
-      set_labels=('Male', 'Female'))
+      set_labels=('European', 'All'))
 
-    plt.title("Fig1: Venn Diagram of Shared and Sex-specific Loci")
-    plt.savefig("sex_specific_loci_venn.png", dpi=300)
+    plt.title("Fig1: Venn Diagram of Shared and European-specific Loci")
+    plt.savefig("ancestry_specific_loci_venn.png", dpi=300)
     plt.show()
-
-# def venn_for_3(df: pd.DataFrame) -> None:
-#     '''
-#     Plot the venn diagram of the significant loci
-#     '''
-#     only_male = set(df[df['SET'].isin(['male,none', 'none,male'])]['SET_LOCI_GROUP_ID'])
-#     only_female = set(df[df['SET'] == 'female']['SET_LOCI_GROUP_ID'])
-#     both = set(df[df['SET'] == 'male,female,none']['SET_LOCI_GROUP_ID'])
-
-#     shared = both
-#     male_only = only_male - shared
-#     female_only = only_female - shared
-#     venn2(subsets=(len(male_only), len(female_only), len(shared)),
-#       set_labels=('Male', 'Female', 'Combined'))
-
-#     plt.title("Fig2: Venn Diagram of Shared and Sex-specific Loci with three inputs")
-#     plt.savefig("sex_specific_loci_venn2.png", dpi=300)
-#     plt.show()
 
 if __name__ == "__main__":
     main()
