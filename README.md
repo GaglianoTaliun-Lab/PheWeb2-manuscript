@@ -1,8 +1,8 @@
 # PheWeb2-manuscript
 
-## Please cite our preprint: 
+## Please cite our paper: 
 
-Bellavance, J., Xiao, H., Chang, L., Kazemi, M., Wickramasinghe, S., Mayhew, A.J., Raina, P., VandeHaar, P., Taliun, D., & Gagliano Taliun, S.A. (2025). Exploring and visualizing stratified genome-wide association study results with PheWeb 2. https://doi.org/10.21203/rs.3.rs-7463215/v1
+Bellavance, J., Xiao, H., Chang, L., Kazemi, M., Wickramasinghe, S., Mayhew, A.J., Raina, P., VandeHaar, P., Taliun, D., & Gagliano Taliun, S.A. (2026). Exploring and visualizing stratified GWAS results with PheWeb2. _Nature Genetics_ https://doi.org/10.1038/s41588-025-02469-8
 
 ## compare_significant_loci
 
